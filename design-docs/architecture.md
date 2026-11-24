@@ -11,7 +11,7 @@
 ```mermaid
 flowchart LR
     subgraph Host["PAgent (host)"]
-        LLM["LLM (Gemma via LiteRT-LM)"]
+        LLM["LLM: on-device (LiteRT-LM)<br/>or cloud (OpenAI-compatible)"]
         ADK["ADK LlmAgent"]
         TS["SkillToolset (ADK Toolset)<br/>resolved every request"]
         Router["SkillRouter<br/>keyword v1 → embeddings later"]
@@ -53,8 +53,8 @@ flowchart LR
 
 | Piece | Owns |
 |---|---|
-| **SDK** | Wire protocol, AIDL, the provider base class (threading, errors, cancellation), host-side discovery and binding, the signature permission |
-| **Host (PAgent)** | Which skills reach the model (routing), turning tool specs into ADK tools, risk policy, showing artifacts |
+| **SDK** | Wire protocol, AIDL, the provider base class (threading, errors, cancellation), host-side discovery and binding, artifact state, the signature permission |
+| **Host (PAgent)** | Which skills reach the model (routing), turning tool specs into ADK tools, risk policy, showing artifacts and storing their ids in chat history |
 | **Provider (Shaderscape)** | Tool semantics, validation, its own data, and the UI where the user makes decisions |
 
 ## Prompt budget and routing
@@ -77,11 +77,22 @@ Every tool and instruction costs tokens on each request, and small models choose
 - **Model choice:**
   - Gemma E2B will often need repairs.
   - Gemma E4B is better.
-  - Frontier cloud models are best, via a later cloud-model or A2A option behind the same skill.
+  - Cloud models (OpenRouter, Ollama Cloud, OpenAI, Gemini, any OpenAI-compatible endpoint) are best. PAgent plugs them in at ADK's `Model` interface, so the skill works unchanged.
 - `ShaderValidator` can also serve as an eval harness: compile rate, render sanity and frame time over a prompt set.
+
+## Artifacts across restarts
+- A `PendingIntent` dies with the host process, but the artifact **id** survives: PAgent stores `{id, title, kind, skill}` in the tool response, so it's part of the saved chat history.
+- When a chat is reopened (or the app resumes), the host calls `resolveArtifact(id)` on the provider that made it.
+- The provider answers with an `ArtifactState`: **pending**, **saved** or **gone**, a short label, and a fresh `Artifact` (new PendingIntent) while it can still be opened.
+- The card shows that state. Tapping a pending or saved card opens it, and a gone card says so. A provider that doesn't override `onResolveArtifact` returns null, and the card shows as unavailable.
+- `resolveArtifact` was **appended** to the AIDL interface, so older hosts and providers keep working. New methods must always be appended.
+
+## Distribution
+- The SDK is its own repo, published through JitPack from git tags: `com.github.PhaniKiran1999:agent-skill-sdk:<tag>`.
+- Apps set `useLocalSkillSdk=true` in `local.properties` to build against a local checkout instead (Gradle composite build with dependency substitution).
 
 ## Roadmap
 - **Transports:** A2A for cloud agents (PAgent's `RemoteAgentGateway`), and an AppFunctions adapter if the permission opens up.
 - **Trust:** a third-party trust model (allow-list, per-skill user consent) beyond same-signature apps.
 - **Side effects:** a confirmation UI for `SIDE_EFFECT` tools.
-- **Persistence:** keep artifacts in chat history; today cards last for the session only.
+- **Routing:** embeddings or a two-stage pick, once there are many skills.
