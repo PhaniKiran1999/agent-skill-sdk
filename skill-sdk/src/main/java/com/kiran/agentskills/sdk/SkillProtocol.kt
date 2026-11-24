@@ -63,6 +63,26 @@ data class Artifact(
 )
 
 /**
+ * What became of an artifact after the tool call that produced it, as reported by its provider.
+ * [label] is short text for the host's UI ("Saved in My wallpapers"). [artifact] is set, with a
+ * fresh PendingIntent, while it can still be opened.
+ */
+data class ArtifactState(
+    val status: Status,
+    val label: String,
+    val artifact: Artifact? = null,
+) {
+    enum class Status {
+        /** Exists but the user hasn't decided yet (e.g. an unsaved draft). */
+        PENDING,
+        /** The user kept it. */
+        SAVED,
+        /** Discarded or expired; nothing to open. */
+        GONE,
+    }
+}
+
+/**
  * A tool's outcome. [data] goes back to the model as JSON. [artifacts] reach the host app (and its
  * UI) and are listed in the JSON by id, title and kind, never as the PendingIntent itself.
  */
@@ -147,6 +167,19 @@ object SkillProtocol {
             Artifact(id, a.optString("kind"), a.optString("title"), a.optString("subtitle"), actionFor(id))
         }
         return ToolResult(o, artifacts)
+    }
+
+    /** `{"status": "saved", "label": "…"}` plus the artifact (if any) as an `_artifacts` entry. Null = unknown. */
+    fun encodeArtifactState(state: ArtifactState?): String {
+        if (state == null) return JSONObject().put("status", "unknown").toString()
+        val data = JSONObject().put("status", state.status.name.lowercase()).put("label", state.label)
+        return encodeResult(ToolResult(data, listOfNotNull(state.artifact)))
+    }
+
+    fun decodeArtifactState(json: String, actionFor: (String) -> PendingIntent?): ArtifactState? {
+        val r = decodeResult(json, actionFor)
+        val status = ArtifactState.Status.entries.firstOrNull { it.name.equals(r.data.optString("status"), true) } ?: return null
+        return ArtifactState(status, r.data.optString("label"), r.artifacts.firstOrNull())
     }
 
     private fun JSONArray?.strings(): List<String> =

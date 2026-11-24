@@ -12,4 +12,11 @@ interface ISkillProvider {
 
     /** Best-effort cancellation of a running invoke(). */
     oneway void cancel(String requestId);
+
+    /**
+     * Reports what became of an artifact a tool returned earlier (e.g. a draft the user later
+     * saved or discarded), with a fresh PendingIntent when it can still be opened. Lets a host
+     * show artifacts from old conversations. Added last so existing transaction codes are unchanged.
+     */
+    oneway void resolveArtifact(String requestId, String artifactId, ISkillCallback callback);
 }

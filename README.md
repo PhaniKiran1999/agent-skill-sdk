@@ -74,6 +74,7 @@ PAgent wraps these in an ADK `Toolset`, which also routes which skills reach the
 | `describe()` | `{protocol, id, title, summary, keywords[], instructions, tools[{name, description, parameters (JSON Schema), risk}]}` |
 | `invoke(requestId, tool, argsJson, callback)` | `callback.onProgress(status)*`, then `callback.onResult(resultJson, Bundle artifacts)` |
 | `cancel(requestId)` | best-effort |
+| `resolveArtifact(requestId, artifactId, callback)` | `{status: pending\|saved\|gone\|unknown, label}` plus a fresh artifact while it can still be opened |
 
 - `resultJson` is the tool's data plus `_artifacts: [{id, kind, title, subtitle}]`.
 - Each artifact id maps to a `PendingIntent` in the `Bundle`.
@@ -83,6 +84,7 @@ PAgent wraps these in an ADK `Toolset`, which also routes which skills reach the
 - **Return drafts, not side effects.** Let the user decide in your own UI, which is the artifact. Tools with `risk = SIDE_EFFECT` are blocked by the host until it has a confirmation flow.
 - **Keep instructions short.** On-device models have small contexts, and instructions are added only while the skill is selected.
 - **Make errors fixable.** Return concrete messages the model can act on, as the wallpaper skill does with compiler errors and line numbers.
+- **Keep artifact ids stable and answer `onResolveArtifact`.** Hosts store artifact ids in chat history and ask later what became of them. A PendingIntent dies with the host process, but the id doesn't. Report whether it's still pending, was saved or is gone, and return a fresh `Artifact` while it can be opened. The default returns null, so cards show as unavailable.
 
 ## Security
 - Provider services require the **signature** permission `com.kiran.agentskills.permission.SKILL`, which this library's manifest defines.

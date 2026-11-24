@@ -8,6 +8,7 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import com.kiran.agentskills.sdk.ArtifactState
 import com.kiran.agentskills.sdk.ISkillCallback
 import com.kiran.agentskills.sdk.ISkillProvider
 import com.kiran.agentskills.sdk.SkillContract
@@ -92,6 +93,40 @@ class SkillConnection(
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
             runCatching { p.cancel(requestId) }
             ToolResult.error("The ${component.packageName} skill timed out after $timeout.")
+        } finally {
+            scheduleIdleUnbind()
+        }
+    }
+
+    /**
+     * Asks the provider what became of [artifactId]. Returns null when the provider doesn't know
+     * it, is unreachable, or predates this call (older providers reject the transaction).
+     */
+    suspend fun resolveArtifact(artifactId: String, timeout: Duration = 10.seconds): ArtifactState? {
+        val p = runCatching { ensureBound() }.getOrNull() ?: return null
+        return try {
+            withTimeout(timeout) {
+                suspendCancellableCoroutine { cont ->
+                    val callback = object : ISkillCallback.Stub() {
+                        override fun onProgress(requestId: String, status: String) = Unit
+
+                        override fun onResult(requestId: String, resultJson: String, artifacts: Bundle?) {
+                            artifacts?.classLoader = PendingIntent::class.java.classLoader
+                            val state = runCatching {
+                                SkillProtocol.decodeArtifactState(resultJson) { id -> artifacts?.pendingIntent(id) }
+                            }.getOrNull()
+                            if (cont.isActive) cont.resume(state)
+                        }
+                    }
+                    try {
+                        p.resolveArtifact(UUID.randomUUID().toString(), artifactId, callback)
+                    } catch (e: Exception) {
+                        if (cont.isActive) cont.resume(null)
+                    }
+                }
+            }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            null
         } finally {
             scheduleIdleUnbind()
         }

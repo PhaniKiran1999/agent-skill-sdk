@@ -56,6 +56,13 @@ abstract class SkillProviderService : Service() {
 
     abstract suspend fun onInvoke(call: ToolCall): ToolResult
 
+    /**
+     * What became of [artifactId], an artifact one of your tools returned earlier, or null if
+     * you don't know it. Return a fresh [Artifact] (with its PendingIntent) while it can still be
+     * opened. The default knows nothing, so artifacts from old chats show as unavailable.
+     */
+    open suspend fun onResolveArtifact(artifactId: String): ArtifactState? = null
+
     private val binder = object : ISkillProvider.Stub() {
         override fun describe(): String = SkillProtocol.encodeDescriptor(descriptor())
 
@@ -88,6 +95,26 @@ abstract class SkillProviderService : Service() {
 
         override fun cancel(requestId: String) {
             running.remove(requestId)?.cancel()
+        }
+
+        override fun resolveArtifact(requestId: String, artifactId: String, callback: ISkillCallback) {
+            serviceScope.launch {
+                val state = try {
+                    onResolveArtifact(artifactId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Resolving $artifactId failed", e)
+                    null
+                }
+                val result = SkillProtocol.encodeArtifactState(state)
+                val extras = Bundle().apply { state?.artifact?.action?.let { putParcelable(state.artifact.id, it) } }
+                try {
+                    callback.onResult(requestId, result, extras)
+                } catch (e: RemoteException) {
+                    Log.w(TAG, "Agent went away before receiving the state of $artifactId")
+                }
+            }
         }
     }
 

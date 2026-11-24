@@ -83,4 +83,21 @@ class SkillProtocolTest {
         assertEquals(0, d.protocolVersion)
         assertTrue(d.tools.isEmpty())
     }
+
+    @Test
+    fun artifactState_roundTrip() {
+        val saved = ArtifactState(ArtifactState.Status.SAVED, "Saved in My wallpapers", Artifact("preview:d1", "wallpaper_preview", "Rain"))
+        val back = SkillProtocol.decodeArtifactState(SkillProtocol.encodeArtifactState(saved)) { null }!!
+        assertEquals(ArtifactState.Status.SAVED, back.status)
+        assertEquals("Saved in My wallpapers", back.label)
+        assertEquals("preview:d1", back.artifact?.id)
+        assertEquals("Rain", back.artifact?.title)
+
+        val gone = SkillProtocol.decodeArtifactState(SkillProtocol.encodeArtifactState(ArtifactState(ArtifactState.Status.GONE, "Discarded"))) { null }!!
+        assertEquals(ArtifactState.Status.GONE, gone.status)
+        assertNull(gone.artifact)
+
+        // A provider that doesn't know the artifact.
+        assertNull(SkillProtocol.decodeArtifactState(SkillProtocol.encodeArtifactState(null)) { null })
+    }
 }
