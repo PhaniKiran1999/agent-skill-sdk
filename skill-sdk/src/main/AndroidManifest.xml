@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Guards every skill provider service. Signature level: only apps signed with the same key
+        as the app that defines it can hold it, so only your own agent can call your skill apps.
+        Both hosts and providers merge this definition; apps sharing a signing key may define the
+        same permission.
+    -->
+    <permission
+        android:name="com.kiran.agentskills.permission.SKILL"
+        android:label="Use agent skills"
+        android:description="@string/agent_skills_permission_description"
+        android:protectionLevel="signature" />
+
+</manifest>

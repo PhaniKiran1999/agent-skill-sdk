@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="agent_skills_permission_description">Lets an on-device agent call tools that this app provides.</string>
+</resources>
