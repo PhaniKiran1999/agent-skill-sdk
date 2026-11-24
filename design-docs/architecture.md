@@ -30,7 +30,7 @@ flowchart LR
         Client["SkillDirectory · SkillConnection (host side)"]
     end
 
-    subgraph Wall["Wallpapers app (provider)"]
+    subgraph Wall["Shaderscape app (provider)"]
         WSS["WallpaperSkillService<br/>create / revise / list"]
         Val["ShaderValidator<br/>static checks · offscreen GPU compile · test render"]
         Drafts["CompositionStore drafts"]
@@ -55,7 +55,7 @@ flowchart LR
 |---|---|
 | **SDK** | Wire protocol, AIDL, the provider base class (threading, errors, cancellation), host-side discovery and binding, the signature permission |
 | **Host (PAgent)** | Which skills reach the model (routing), turning tool specs into ADK tools, risk policy, showing artifacts |
-| **Provider (Wallpapers)** | Tool semantics, validation, its own data, and the UI where the user makes decisions |
+| **Provider (Shaderscape)** | Tool semantics, validation, its own data, and the UI where the user makes decisions |
 
 ## Prompt budget and routing
 Every tool and instruction costs tokens on each request, and small models choose worse among many tools. So:

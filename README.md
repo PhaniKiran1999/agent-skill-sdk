@@ -3,7 +3,7 @@
 [![](https://jitpack.io/v/PhaniKiran1999/agent-skill-sdk.svg)](https://jitpack.io/#PhaniKiran1999/agent-skill-sdk)
 
 Lets an on-device agent app (the **host**, e.g. PAgent) use tools that live in **other apps**
-(**skill providers**, e.g. the Wallpapers app). It works like MCP on Android, over Binder:
+(**skill providers**, e.g. the Shaderscape wallpaper app). It works like MCP on Android, over Binder:
 
 - providers describe their tools with JSON Schemas and short prompt instructions;
 - the host discovers providers at runtime and offers their tools to its LLM;
@@ -56,7 +56,7 @@ Clone this repo next to the app and add this to the app's `local.properties` (it
 useLocalSkillSdk=true
 ```
 The app's `settings.gradle.kts` then uses `includeBuild("../agent-skill-sdk")` and substitutes the published module with
-this source tree, so SDK edits show up in the app straight away. PAgent and Wallpapers already have this switch; for a new app, copy the
+this source tree, so SDK edits show up in the app straight away. PAgent and Shaderscape already have this switch; for a new app, copy the
 block at the end of their `settings.gradle.kts`.
 
 ## Releasing a new version
