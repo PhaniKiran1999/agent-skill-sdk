@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.PhaniKiran1999.agent-skill-sdk:skill-sdk:0.1.0")
+    implementation("com.github.PhaniKiran1999:agent-skill-sdk:0.1.0")
 }
 ```
 
@@ -47,7 +47,7 @@ With a version catalog:
 [versions]
 agentSkillSdk = "0.1.0"
 [libraries]
-agent-skill-sdk = { group = "com.github.PhaniKiran1999.agent-skill-sdk", name = "skill-sdk", version.ref = "agentSkillSdk" }
+agent-skill-sdk = { group = "com.github.PhaniKiran1999", name = "agent-skill-sdk", version.ref = "agentSkillSdk" }
 ```
 
 ### Developing the SDK and an app together

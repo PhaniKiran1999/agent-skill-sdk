@@ -4,9 +4,9 @@ plugins {
 }
 
 // Published through JitPack from https://github.com/PhaniKiran1999/agent-skill-sdk:
-//   implementation("com.github.PhaniKiran1999.agent-skill-sdk:skill-sdk:<tag>")
+//   implementation("com.github.PhaniKiran1999:agent-skill-sdk:<tag>")
 // JitPack builds a git tag and exposes it as $VERSION; local builds use VERSION_NAME.
-group = "com.github.PhaniKiran1999.agent-skill-sdk"
+group = "com.github.PhaniKiran1999"
 version = providers.environmentVariable("VERSION").orElse(providers.gradleProperty("VERSION_NAME")).get()
 
 android {
@@ -43,7 +43,7 @@ publishing {
     publications {
         register<MavenPublication>("release") {
             groupId = project.group.toString()
-            artifactId = "skill-sdk"
+            artifactId = "agent-skill-sdk"
             version = project.version.toString()
             afterEvaluate { from(components["release"]) }
             pom {
