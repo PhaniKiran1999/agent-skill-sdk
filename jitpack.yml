@@ -1,0 +1,8 @@
+# JitPack build: https://jitpack.io/#PhaniKiran1999/agent-skill-sdk
+jdk:
+  - openjdk21
+before_install:
+  - yes | sdkmanager --licenses > /dev/null || true
+  - sdkmanager "platforms;android-37.0" "build-tools;36.0.0" || true
+install:
+  - ./gradlew :skill-sdk:publishToMavenLocal -x test --no-configuration-cache --stacktrace

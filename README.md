@@ -1,5 +1,7 @@
 # Agent Skill SDK
 
+[![](https://jitpack.io/v/PhaniKiran1999/agent-skill-sdk.svg)](https://jitpack.io/#PhaniKiran1999/agent-skill-sdk)
+
 Lets an on-device agent app (the **host**, e.g. PAgent) use tools that live in **other apps**
 (**skill providers**, e.g. the Wallpapers app). It works like MCP on Android, over Binder:
 
@@ -18,15 +20,57 @@ Lets an on-device agent app (the **host**, e.g. PAgent) use tools that live in *
  └──────────────────────┘             └────────────────────────────┘
 ```
 
+## Install
+
+The SDK is published through [JitPack](https://jitpack.io/#PhaniKiran1999/agent-skill-sdk).
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io") {
+            content { includeGroupByRegex("com\\.github\\.PhaniKiran1999.*") }
+        }
+    }
+}
+
+// app/build.gradle.kts
+dependencies {
+    implementation("com.github.PhaniKiran1999.agent-skill-sdk:skill-sdk:0.1.0")
+}
+```
+
+With a version catalog:
+```toml
+[versions]
+agentSkillSdk = "0.1.0"
+[libraries]
+agent-skill-sdk = { group = "com.github.PhaniKiran1999.agent-skill-sdk", name = "skill-sdk", version.ref = "agentSkillSdk" }
+```
+
+### Developing the SDK and an app together
+Clone this repo next to the app and add this to the app's `local.properties` (it's per machine and never committed):
+```properties
+useLocalSkillSdk=true
+```
+The app's `settings.gradle.kts` then uses `includeBuild("../agent-skill-sdk")` and substitutes the published module with
+this source tree, so SDK edits show up in the app straight away. PAgent and Wallpapers already have this switch; for a new app, copy the
+block at the end of their `settings.gradle.kts`.
+
+## Releasing a new version
+1. Bump `VERSION_NAME` in `gradle.properties`, then commit.
+2. Tag the same version and push it: `git tag 0.2.0 && git push origin main 0.2.0`.
+3. Open `https://jitpack.io/#PhaniKiran1999/agent-skill-sdk` (or request the POM). JitPack builds the tag on first request.
+4. Bump `agentSkillSdk` in each app's version catalog.
+
+Changing the AIDL interface: only **append** methods. Hosts and providers update separately, so the transaction order of existing
+methods must stay the same.
+
 ## Add a new skill app in 3 steps
 
-1. **Depend on the SDK.** For a composite build next to this repo:
-   ```kotlin
-   // settings.gradle.kts
-   includeBuild("../agent-skill-sdk")
-   // app/build.gradle.kts
-   implementation("com.kiran.agentskills:skill-sdk:0.1.0")
-   ```
+1. **Depend on the SDK** (see [Install](#install)).
 2. **Implement the service.**
    ```kotlin
    class NotesSkillService : SkillProviderService() {

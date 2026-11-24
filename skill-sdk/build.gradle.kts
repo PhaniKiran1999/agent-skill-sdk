@@ -1,11 +1,13 @@
 plugins {
     alias(libs.plugins.android.library)
+    `maven-publish`
 }
 
-// Consumers depend on "com.kiran.agentskills:skill-sdk". In a composite build
-// (includeBuild("../agent-skill-sdk")) Gradle substitutes this project automatically.
-group = "com.kiran.agentskills"
-version = "0.1.0"
+// Published through JitPack from https://github.com/PhaniKiran1999/agent-skill-sdk:
+//   implementation("com.github.PhaniKiran1999.agent-skill-sdk:skill-sdk:<tag>")
+// JitPack builds a git tag and exposes it as $VERSION; local builds use VERSION_NAME.
+group = "com.github.PhaniKiran1999.agent-skill-sdk"
+version = providers.environmentVariable("VERSION").orElse(providers.gradleProperty("VERSION_NAME")).get()
 
 android {
     namespace = "com.kiran.agentskills.sdk"
@@ -28,6 +30,34 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = project.group.toString()
+            artifactId = "skill-sdk"
+            version = project.version.toString()
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("Agent Skill SDK")
+                description.set("Lets on-device AI agents discover and call tools in other Android apps over Binder.")
+                url.set("https://github.com/PhaniKiran1999/agent-skill-sdk")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+            }
+        }
     }
 }
 
