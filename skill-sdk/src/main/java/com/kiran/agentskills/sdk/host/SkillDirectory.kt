@@ -16,6 +16,8 @@ data class SkillProviderInfo(
     val keywords: List<String>,
     /** The provider app's version, used to invalidate cached descriptors after an update. */
     val versionCode: Long,
+    /** When the provider app was last installed or updated (catches reinstalls with the same version). */
+    val updatedAt: Long = 0L,
 )
 
 /**
@@ -52,6 +54,7 @@ class SkillDirectory(context: Context) {
                 keywords = meta.getString(SkillContract.META_KEYWORDS).orEmpty()
                     .split(',').map { it.trim().lowercase() }.filter { it.isNotEmpty() },
                 versionCode = versionOf(si.packageName),
+                updatedAt = runCatching { pm.getPackageInfo(si.packageName, 0).lastUpdateTime }.getOrDefault(0L),
             )
         }
     }
